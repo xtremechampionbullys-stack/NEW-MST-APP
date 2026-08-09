@@ -1,0 +1,1588 @@
+/*
+ * Design tokens — workspace system.
+ *
+ * The surface, text, border and accent scale follows the supplied
+ * ChatGPT/Codex-style spec verbatim. On top of it sit two things that spec does
+ * not carry and a trading interface cannot do without: a categorical series
+ * palette for charts, and a reserved status pair for profit and loss.
+ *
+ * Legacy token names (--surface-1, --plane, --text-primary…) are kept as
+ * aliases of the new ones rather than find-and-replaced across forty
+ * components. That is deliberate: a rename touching every file is a large diff
+ * in which a single wrong substitution is invisible, whereas an alias layer is
+ * one block that can be read in full and verified against the spec.
+ *
+ * Every theme is validated by tools/palette_check.py, which runs in pytest.
+ * Two values from the supplied light palette had to move, and both are called
+ * out at the eggshell block below — the spec's own numbers failed contrast.
+ *
+ * Themes are selected by `data-theme`. The selectors are not :root-scoped, so
+ * putting the attribute on any element re-themes that subtree — which is what
+ * makes the settings swatches a live preview of the real tokens.
+ */
+
+/* ---------------------------------------------------------------- shared */
+
+:root {
+  --glass-mix: 100%;
+  --glass-blur: none;
+
+  /* Radius strategy from the spec. */
+  --radius-pill: 24px;    /* composer, floating cards */
+  --radius: 12px;         /* panels, modals */
+  --radius-sm: 8px;       /* code blocks, chips */
+
+  --font: "Söhne", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "Fira Code", "JetBrains Mono", "SF Mono", Menlo, monospace;
+
+  /* Motion. One curve, one duration scale — the spec's smooth deceleration. */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-panel: 250ms;
+  --dur-hover: 150ms;
+
+  --sidebar-w: 260px;
+  --header-h: 48px;
+  --reading-w: 48rem;
+}
+
+/* -------------------------------------------------------- 1. dark (default) */
+
+:root {
+  color-scheme: dark;
+
+  /* Ambient light. Two soft pools — blue high-left, violet low-right — washing
+   * the workspace behind everything. Very low alpha on purpose: this is the
+   * light in the room, not a gradient anyone should be able to point at. */
+  --amb-blue: rgba(58, 110, 220, 0.10);
+  --amb-violet: rgba(140, 92, 232, 0.09);
+
+  /* Chrome: the rail, the top bar and the menu surfaces. Deliberately
+   * darker and cooler than the workspace — a blue-black that reads as the
+   * application frame rather than as more canvas, so the eye separates
+   * navigation from content without a heavy border. */
+  --chrome-bg: #0c0e13;
+  --chrome-bg-2: #12151c;
+  --chrome-border: rgba(255, 255, 255, 0.07);
+  --glow: rgba(16, 163, 127, 0.55);
+  --glow-soft: rgba(16, 163, 127, 0.12);
+
+  --bg-primary: #171717;
+  --bg-secondary: #212121;
+  --bg-tertiary: #2f2f2f;
+  --bg-elevated: #383838;
+
+  --text-primary: #ececec;
+  --text-secondary: #b4b4b4;
+  --text-muted: #8e8e8e;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --accent-brand: #10a37f;
+  --accent-brand-hover: #1a7f64;
+  --accent-surface: rgba(16, 163, 127, 0.15);
+  --accent-user-bubble: #212121;
+
+  /* --- aliases: legacy names, new values ------------------------------- */
+  --plane: var(--bg-primary);
+  --surface-1: var(--bg-secondary);
+  --surface-2: var(--bg-tertiary);
+  --surface-3: var(--bg-elevated);
+  --border: var(--border-subtle);
+  --grid: rgba(255, 255, 255, 0.06);
+  --axis: rgba(255, 255, 255, 0.22);
+  --glass-border: var(--border-subtle);
+  --code-bg: #0d0d0d;
+  --code-header-bg: #171717;
+
+  /* --- charts: not in the spec, required by the product ---------------- */
+  /* Categorical series, fixed slot order, never cycled. Lifted to hold 3:1
+   * against #212121, which is a lighter surface than the palette was
+   * originally validated against. */
+  --series-1: #5aa3f0;
+  --series-2: #f0803c;
+  --series-3: #2bbd8c;
+  --series-4: #d9a021;
+
+  --seq-250: #b9d6f8;
+  --seq-350: #8bbcf3;
+  --seq-450: #5aa3f0;
+  --seq-550: #3b7fc4;
+  --seq-600: #33689e;
+
+  --div-neg-3: #e8615c;
+  --div-neg-2: #ef8d89;
+  --div-neg-1: #f5b8b5;
+  --div-mid: #4a4a4a;
+  --div-pos-1: #b9d6f8;
+  --div-pos-2: #8bbcf3;
+  --div-pos-3: #5aa3f0;
+
+  /* Status. Profit and loss are separated in lightness as well as hue so the
+   * pair survives red-green colour blindness — see the note in the palette
+   * checker. Green is the brand teal's neighbour on purpose. */
+  --status-good: #2dd4a0;
+  --status-warning: #e0a52e;
+  --status-serious: #ef8f5f;
+  --status-critical: #f0666b;
+}
+
+/* -------------------------------------------------------- 2. light black */
+
+[data-theme="light-black"] {
+  color-scheme: dark;
+
+  --amb-blue: rgba(72, 124, 232, 0.09);
+  --amb-violet: rgba(150, 102, 240, 0.08);
+
+  --chrome-bg: #131417;
+  --chrome-bg-2: #191a1e;
+  --chrome-border: rgba(255, 255, 255, 0.08);
+  --glow: rgba(20, 181, 140, 0.55);
+  --glow-soft: rgba(20, 181, 140, 0.13);
+
+  --bg-primary: #1e1e20;
+  --bg-secondary: #2a2a2d;
+  --bg-tertiary: #343438;
+  --bg-elevated: #3f3f45;
+
+  --text-primary: #f2f2f1;
+  --text-secondary: #bdbcb8;
+  --text-muted: #949390;
+
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --accent-brand: #14b58c;
+  --accent-brand-hover: #0f8e6d;
+  --accent-surface: rgba(20, 181, 140, 0.16);
+  --accent-user-bubble: #2a2a2d;
+
+  --plane: var(--bg-primary);
+  --surface-1: var(--bg-secondary);
+  --surface-2: var(--bg-tertiary);
+  --surface-3: var(--bg-elevated);
+  --border: var(--border-subtle);
+  --grid: rgba(255, 255, 255, 0.07);
+  --axis: rgba(255, 255, 255, 0.26);
+  --glass-border: var(--border-subtle);
+  --code-bg: #141416;
+  --code-header-bg: #1e1e20;
+
+  --series-1: #6cb0f5;
+  --series-2: #f58b48;
+  --series-3: #32c795;
+  --series-4: #e0a92c;
+
+  --seq-250: #c3dcfa;
+  --seq-350: #97c4f6;
+  --seq-450: #6cb0f5;
+  --seq-550: #4a8ccd;
+  --seq-600: #3d74aa;
+
+  --div-neg-3: #ef7371;
+  --div-neg-2: #f39a98;
+  --div-neg-1: #f8c2c1;
+  --div-mid: #55555a;
+  --div-pos-1: #c3dcfa;
+  --div-pos-2: #97c4f6;
+  --div-pos-3: #6cb0f5;
+
+  --status-good: #2dd4a0;
+  --status-warning: #e8b03e;
+  --status-serious: #f39a6d;
+  --status-critical: #f47478;
+}
+
+/* ------------------------------------------------------------ 3. eggshell */
+/*
+ * The supplied light palette, warmed to eggshell, with two corrections the
+ * checker forced. Both are recorded because they are the kind of thing that
+ * otherwise gets silently "improved" away:
+ *
+ *   --text-muted #8e8e8e on #ffffff measures 3.5:1. That is below the 4.5:1
+ *   text threshold, and this token labels timestamps and axis ticks — small
+ *   text, where the shortfall bites hardest. Darkened to #6f6d67.
+ *
+ *   --accent-brand #10a37f on white measures 3.0:1. Fine as a fill or a 3px
+ *   status dot, not fine as the label text on a primary button, which is where
+ *   it would end up. Darkened to #0a7f62 for the light surface only; the dark
+ *   themes keep the spec value exactly.
+ */
+
+[data-theme="eggshell"] {
+  color-scheme: light;
+
+  --amb-blue: rgba(58, 110, 220, 0.055);
+  --amb-violet: rgba(140, 92, 232, 0.05);
+
+  /* The light theme has no blue-black to reach for, so the chrome is a cool
+   * off-white one step down from the canvas. The green accent carries the
+   * same job it does in the dark themes. */
+  --chrome-bg: #edece6;
+  --chrome-bg-2: #e4e2da;
+  --chrome-border: rgba(0, 0, 0, 0.09);
+  --glow: rgba(10, 127, 98, 0.45);
+  --glow-soft: rgba(10, 127, 98, 0.12);
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9f8f4;
+  --bg-tertiary: #f4f2ec;
+  --bg-elevated: #e7e4db;
+
+  --text-primary: #0d0d0d;
+  --text-secondary: #5b5952;
+  --text-muted: #6f6d67;
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.15);
+
+  --accent-brand: #0a7f62;
+  --accent-brand-hover: #086650;
+  --accent-surface: rgba(10, 127, 98, 0.13);
+  --accent-user-bubble: #f4f2ec;
+
+  --plane: #f4f2ec;
+  --surface-1: #ffffff;
+  --surface-2: var(--bg-tertiary);
+  --surface-3: var(--bg-elevated);
+  --border: var(--border-subtle);
+  --grid: rgba(0, 0, 0, 0.07);
+  --axis: rgba(0, 0, 0, 0.26);
+  --glass-border: var(--border-subtle);
+  --code-bg: #f4f2ec;
+  --code-header-bg: #e7e4db;
+
+  --series-1: #1a63b8;
+  --series-2: #b34216;
+  --series-3: #0d6f4d;
+  --series-4: #7d5300;
+
+  --seq-250: #7fadde;
+  --seq-350: #4b8ccd;
+  --seq-450: #1a63b8;
+  --seq-550: #144c8e;
+  --seq-600: #103c71;
+
+  --div-neg-3: #9b1c1c;
+  --div-neg-2: #c0504d;
+  --div-neg-1: #dd8f8c;
+  --div-mid: #ded7c7;
+  --div-pos-1: #8fb8e4;
+  --div-pos-2: #4b8ccd;
+  --div-pos-3: #1a63b8;
+
+  --status-good: #1d7a4f;
+  --status-warning: #8a5a00;
+  --status-serious: #a8481c;
+  --status-critical: #9b1c1c;
+}
+
+/* --------------------------------------------------------------- 4. glass */
+/*
+ * Translucent panels over a fixed backdrop gradient.
+ *
+ * What a pixel renders on a translucent panel is the surface blended over
+ * whatever is behind it, so measuring contrast against the nominal surface
+ * flatters the theme while the real screen fails. Hence: the backdrop is a
+ * gradient this file owns, its three stops are spread in hue but held together
+ * in luminance, and palette_check.py composites over each stop and gates on
+ * the worst result.
+ */
+
+[data-theme="glass"] {
+  color-scheme: dark;
+
+  --amb-blue: rgba(70, 130, 255, 0.16);
+  --amb-violet: rgba(160, 110, 255, 0.14);
+
+  --chrome-bg: rgba(9, 14, 28, 0.72);
+  --chrome-bg-2: rgba(14, 20, 38, 0.72);
+  --chrome-border: rgba(255, 255, 255, 0.10);
+  --glow: rgba(25, 199, 155, 0.6);
+  --glow-soft: rgba(25, 199, 155, 0.15);
+
+  --glass-mix: 74%;
+  --glass-blur: blur(22px) saturate(150%);
+
+  --glass-stop-a: #101a33;
+  --glass-stop-b: #1a1830;
+  --glass-stop-c: #0d2739;
+
+  --bg-primary: #161d31;
+  --bg-secondary: #2c3450;
+  --bg-tertiary: #38415f;
+  --bg-elevated: #454f70;
+
+  --text-primary: #ffffff;
+  --text-secondary: #ccd2e0;
+  --text-muted: #9aa3b7;
+
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.26);
+  --accent-brand: #19c79b;
+  --accent-brand-hover: #12a37e;
+  --accent-surface: rgba(25, 199, 155, 0.18);
+  --accent-user-bubble: rgba(255, 255, 255, 0.07);
+
+  --plane: var(--bg-primary);
+  --surface-1: var(--bg-secondary);
+  --surface-2: var(--bg-tertiary);
+  --surface-3: var(--bg-elevated);
+  --border: var(--border-subtle);
+  --grid: rgba(255, 255, 255, 0.09);
+  --axis: rgba(255, 255, 255, 0.28);
+  --glass-border: rgba(255, 255, 255, 0.16);
+  --code-bg: rgba(0, 0, 0, 0.32);
+  --code-header-bg: rgba(0, 0, 0, 0.18);
+
+  --series-1: #6fb0fb;
+  --series-2: #ff8352;
+  --series-3: #35c795;
+  --series-4: #ecac2e;
+
+  --seq-250: #bcd8fb;
+  --seq-350: #94c0f8;
+  --seq-450: #6fb0fb;
+  --seq-550: #4a90e2;
+  --seq-600: #3b78c4;
+
+  --div-neg-3: #f4736e;
+  --div-neg-2: #f79a96;
+  --div-neg-1: #fbc0be;
+  --div-mid: #5b6480;
+  --div-pos-1: #bcd8fb;
+  --div-pos-2: #94c0f8;
+  --div-pos-3: #6fb0fb;
+
+  --status-good: #3fe0ae;
+  --status-warning: #f5c04a;
+  --status-serious: #ff9d72;
+  --status-critical: #ff7a7a;
+}
+
+/* Midnight blue — the darker blue-black counterpart to Charcoal glass. */
+[data-theme="midnight"] {
+  color-scheme: dark;
+  --amb-blue: rgba(21, 118, 241, 0.13);
+  --amb-violet: rgba(111, 65, 244, 0.10);
+  --chrome-bg: rgba(5, 12, 32, 0.78);
+  --chrome-bg-2: rgba(14, 29, 61, 0.82);
+  --chrome-border: rgba(99, 140, 209, 0.19);
+  --glow: rgba(19, 229, 242, 0.42);
+  --glow-soft: rgba(19, 229, 242, 0.12);
+  --glass-mix: 42%;
+  --glass-blur: blur(28px) saturate(122%);
+  --glass-stop-a: #0b1735;
+  --glass-stop-b: #040816;
+  --glass-stop-c: #09122c;
+  --bg-primary: #080d1d;
+  --bg-secondary: #131d34;
+  --bg-tertiary: #1a2742;
+  --bg-elevated: #243252;
+  --text-primary: #f1f6ff;
+  --text-secondary: #c6d3eb;
+  --text-muted: #91a3c2;
+  --border-subtle: rgba(145, 178, 234, 0.15);
+  --border-strong: rgba(163, 198, 255, 0.29);
+  --accent-brand: #16ddec;
+  --accent-brand-hover: #81f3fa;
+  --accent-surface: rgba(22, 221, 236, 0.13);
+  --accent-user-bubble: rgba(83, 111, 176, 0.17);
+  --plane: var(--bg-primary);
+  --surface-1: var(--bg-secondary);
+  --surface-2: var(--bg-tertiary);
+  --surface-3: var(--bg-elevated);
+  --border: var(--border-subtle);
+  --grid: rgba(160, 192, 245, 0.10);
+  --axis: rgba(181, 208, 250, 0.35);
+  --glass-border: rgba(145, 187, 250, 0.20);
+  --code-bg: rgba(1, 5, 19, 0.46);
+  --code-header-bg: rgba(85, 115, 176, 0.10);
+  --series-1: #79b7ff;
+  --series-2: #f4a05f;
+  --series-3: #49dfbf;
+  --series-4: #f1c65a;
+  --seq-250: #c7e0ff;
+  --seq-350: #9bcaff;
+  --seq-450: #79b7ff;
+  --seq-550: #548ddd;
+  --seq-600: #3d6eaf;
+  --div-neg-3: #ff807d;
+  --div-neg-2: #ffa49f;
+  --div-neg-1: #ffc6c2;
+  --div-mid: #556482;
+  --div-pos-1: #c7e0ff;
+  --div-pos-2: #9bcaff;
+  --div-pos-3: #79b7ff;
+  --status-good: #4be0b9;
+  --status-warning: #f4c44c;
+  --status-serious: #ffa174;
+  --status-critical: #ff7d80;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  padding: 0;
+  margin: 0;
+  background: var(--plane);
+  color: var(--text-primary);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select { font-family: inherit; font-size: inherit; }
+
+/* ---------------- layout ---------------- */
+
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 650; letter-spacing: -0.01em; }
+.brand-mark { width: 22px; height: 22px; }
+.brand small { display: block; font-weight: 400; font-size: 11px; color: var(--text-muted); letter-spacing: 0; }
+
+.shell { display: grid; grid-template-columns: 268px minmax(0, 1fr) 320px; gap: 14px; padding: 14px; align-items: start; }
+@media (max-width: 1500px) { .shell { grid-template-columns: 250px minmax(0, 1fr); } .rail-right { grid-column: 1 / -1; } }
+@media (max-width: 1040px) { .shell { grid-template-columns: minmax(0, 1fr); } }
+
+.rail { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 62px; max-height: calc(100vh - 76px); overflow-y: auto; }
+@media (max-width: 1040px) { .rail { position: static; max-height: none; } }
+
+.main { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* ---------------- primitives ---------------- */
+
+.card {
+  background: color-mix(in srgb, var(--surface-1) var(--glass-mix), transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 11px 14px 9px;
+  border-bottom: 1px solid var(--border);
+}
+.card-head h2 { margin: 0; font-size: 13px; font-weight: 620; letter-spacing: -0.005em; }
+.card-head .sub { font-size: 11.5px; color: var(--text-muted); }
+.card-body { padding: 13px 14px; }
+.card-body.flush { padding: 0; }
+
+.row { display: flex; align-items: center; gap: 8px; }
+.spread { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.muted { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+.num { font-variant-numeric: tabular-nums; }
+.tiny { font-size: 11px; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--surface-3); border: 1px solid var(--border);
+  font-size: 11px; color: var(--text-secondary); white-space: nowrap;
+}
+.chip.accent { border-color: color-mix(in oklab, var(--series-1) 45%, transparent); color: var(--series-1); }
+
+.btn {
+  background: var(--surface-3); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px 11px; cursor: pointer; transition: background 120ms, border-color 120ms;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.btn.primary { background: var(--series-1); border-color: var(--series-1); color: #fff; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; }
+/* `.btn` is used on anchors as well as buttons. Anchors carry the UA's
+ * underline and inherit neither the font nor the button's box model, so
+ * without this an <a class="btn"> renders as an underlined link sitting inside
+ * a button-coloured rectangle. */
+a.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  text-decoration: none; font: inherit; line-height: 1.2;
+}
+a.btn.primary, a.btn.primary:hover { color: #fff; }
+.btn[aria-pressed="true"] { background: color-mix(in oklab, var(--series-1) 22%, transparent); border-color: var(--series-1); color: var(--text-primary); }
+
+.input, .select {
+  background: var(--surface-2); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 6px 9px; width: 100%;
+}
+.input:focus, .select:focus { outline: 2px solid color-mix(in oklab, var(--series-1) 60%, transparent); outline-offset: -1px; }
+
+.field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.field label { font-size: 11.5px; color: var(--text-secondary); display: flex; justify-content: space-between; gap: 8px; }
+.field .help { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.field .value { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+input[type="range"] { width: 100%; accent-color: var(--series-1); height: 18px; }
+
+/* ---------------- strategy list ---------------- */
+
+.cat-group { border-bottom: 1px solid var(--border); }
+.cat-group:last-child { border-bottom: none; }
+.cat-head {
+  width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 9px 14px; color: var(--text-secondary);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cat-head:hover { color: var(--text-primary); background: var(--surface-2); }
+.strat {
+  width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 7px 14px 8px 18px; color: var(--text-secondary);
+  border-left: 2px solid transparent; display: block;
+}
+.strat:hover { background: var(--surface-2); color: var(--text-primary); }
+.strat[aria-current="true"] { background: var(--surface-2); color: var(--text-primary); border-left-color: var(--series-1); }
+.strat .name { display: block; font-size: 12.5px; font-weight: 520; }
+.strat .desc { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.35; margin-top: 2px; }
+
+/* ---------------- stat tiles ---------------- */
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); gap: 1px; background: var(--border); }
+.tile { background: color-mix(in srgb, var(--surface-1) var(--glass-mix), transparent); padding: 11px 13px; }
+[data-theme="glass"] .tile { background: transparent; }
+[data-theme="glass"] .tiles { background: var(--glass-border); }
+.tile .k { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.055em; color: var(--text-muted); }
+.tile .v { font-size: 19px; font-weight: 600; margin-top: 3px; letter-spacing: -0.015em; font-variant-numeric: tabular-nums; }
+.tile .n { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.pos { color: var(--status-good); }
+.neg { color: var(--status-critical); }
+
+/* ---------------- tables ---------------- */
+
+.table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.table th {
+  text-align: right; font-weight: 500; color: var(--text-muted);
+  padding: 7px 10px; border-bottom: 1px solid var(--border);
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em;
+  position: sticky; top: 0; background: var(--surface-1); z-index: 1;
+}
+.table th:first-child, .table td:first-child { text-align: left; }
+.table td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--grid); font-variant-numeric: tabular-nums; }
+.table tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: var(--surface-2); }
+.scroll { max-height: 340px; overflow: auto; }
+
+.swatch { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 7px; vertical-align: -1px; }
+
+/* ---------------- insights ---------------- */
+
+.insight { display: flex; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--grid); }
+.insight:last-child { border-bottom: none; }
+.insight .icon { flex: 0 0 16px; margin-top: 1px; }
+.insight .t { font-size: 12.5px; font-weight: 570; }
+.insight .d { font-size: 11.5px; color: var(--text-secondary); line-height: 1.45; margin-top: 2px; }
+
+/* ---------------- explanation ---------------- */
+
+.explain h3 {
+  margin: 14px 0 4px; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted); font-weight: 600;
+}
+.explain h3:first-child { margin-top: 0; }
+.explain p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+
+/* ---------------- charts ---------------- */
+
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap svg { display: block; width: 100%; height: auto; }
+.axis-label { font-size: 10px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+.grid-line { stroke: var(--grid); stroke-width: 1; }
+.axis-line { stroke: var(--axis); stroke-width: 1; }
+
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 20;
+  background: var(--surface-3); border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  font-size: 11.5px; min-width: 148px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+.tooltip .tt-head { font-weight: 620; margin-bottom: 5px; font-variant-numeric: tabular-nums; }
+.tooltip .tt-row { display: flex; justify-content: space-between; gap: 14px; font-variant-numeric: tabular-nums; }
+.tooltip .tt-row span:first-child { color: var(--text-secondary); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 14px 0; font-size: 11.5px; color: var(--text-secondary); }
+.legend .item { display: flex; align-items: center; gap: 6px; }
+.legend .line { width: 14px; height: 2px; border-radius: 1px; }
+
+.banner {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 14px; font-size: 11.5px;
+  background: color-mix(in oklab, var(--status-warning) 12%, var(--surface-1));
+  border-bottom: 1px solid var(--border); color: var(--text-secondary);
+}
+
+.nav { display: flex; gap: 2px; margin-left: 4px; }
+.nav a {
+  display: inline-block; padding: 5px 11px; border-radius: var(--radius-sm);
+  color: var(--text-muted); text-decoration: none; font-size: 12.5px;
+}
+.nav a:hover { color: var(--text-primary); background: var(--surface-2); }
+.nav a[aria-current="page"] { color: var(--text-primary); background: var(--surface-3); }
+
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+.page { display: flex; flex-direction: column; gap: 14px; padding: 14px; }
+
+.meter { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.meter > div { height: 100%; border-radius: 3px; }
+
+.tabs { display: flex; gap: 2px; }
+/* Seven tabs will not fit beside a heading on a laptop. Wrapping is better than
+ * a horizontal scroller here: the tabs are the navigation for the panel below,
+ * and a hidden tab is a hidden panel. */
+.tabs-wrap { flex-wrap: wrap; justify-content: flex-end; }
+.tab {
+  background: none; border: none; cursor: pointer; padding: 5px 10px;
+  color: var(--text-muted); border-radius: var(--radius-sm); font-size: 12px;
+}
+.tab:hover { color: var(--text-primary); background: var(--surface-2); }
+.tab[aria-selected="true"] { color: var(--text-primary); background: var(--surface-3); }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius-sm);
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.err {
+  padding: 11px 14px; font-size: 12px;
+  background: color-mix(in oklab, var(--status-critical) 14%, var(--surface-1));
+  color: var(--text-primary); border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  * { transition: none !important; }
+}
+
+/* ---------------- research page ---------------- */
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+.controls .field { margin-bottom: 0; }
+.controls .field > span:first-child { font-size: 11.5px; color: var(--text-secondary); }
+
+.kv {
+  display: flex; justify-content: space-between; gap: 12px;
+  padding: 5px 0; font-size: 12.5px; border-bottom: 1px solid var(--grid);
+}
+.kv:last-child { border-bottom: none; }
+.kv > span { color: var(--text-secondary); }
+.kv > strong { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+.rule { height: 1px; background: var(--border); margin: 12px 0; }
+
+/*
+ * The skill bar. Accuracy is meaningless without the base rate beside it --
+ * a model that always predicts "up" on a stock that rose 58% of the time
+ * scores 58%. So the base-rate marker and its +/-2 SE band are part of the
+ * component, not optional decoration: the bar cannot be rendered without them.
+ */
+.skill { margin-bottom: 10px; }
+.skill-track {
+  position: relative; height: 26px; border-radius: var(--radius-sm);
+  background: var(--surface-3); overflow: hidden;
+}
+.skill-fill { height: 100%; background: var(--series-1); opacity: 0.8; }
+.skill-band {
+  position: absolute; top: 0; height: 100%;
+  background: color-mix(in oklab, var(--text-secondary) 26%, transparent);
+}
+.skill-mark {
+  position: absolute; top: 0; width: 2px; height: 100%;
+  background: var(--text-primary);
+}
+.skill-legend {
+  display: flex; flex-wrap: wrap; gap: 14px; margin-top: 7px;
+  font-size: 11.5px; color: var(--text-secondary);
+}
+.skill-legend strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+.verdict {
+  margin: 12px 0 0; padding: 10px 12px; border-radius: var(--radius-sm);
+  font-size: 12.5px; line-height: 1.5;
+  border-left: 3px solid var(--text-muted); background: var(--surface-2);
+  color: var(--text-secondary);
+}
+.verdict.ok { border-left-color: var(--status-good); }
+.verdict.null { border-left-color: var(--status-warning); }
+
+.ribbon {
+  display: flex; height: 14px; border-radius: var(--radius-sm); overflow: hidden;
+  background: var(--surface-3);
+}
+.ribbon > div { height: 100%; }
+
+.banner.warn {
+  background: color-mix(in oklab, var(--status-warning) 12%, var(--surface-1));
+}
+
+/* ---------------- settings ---------------- */
+
+.settings { position: relative; margin-left: 8px; }
+.settings .btn { display: inline-flex; align-items: center; }
+
+.popover {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60;
+  width: 336px;
+  /*
+   * Opaque in every theme, including glass. A settings panel floats over live
+   * charts, and reading a theme name through a candlestick is worse than the
+   * panel not matching the rest of the surface.
+   */
+  background: var(--surface-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.popover-head {
+  padding: 10px 13px 8px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.055em;
+  color: var(--text-muted); border-bottom: 1px solid var(--border);
+}
+.popover-foot {
+  padding: 9px 13px 11px; font-size: 10.5px; line-height: 1.5;
+  color: var(--text-muted); border-top: 1px solid var(--border);
+}
+.popover-foot code { font-family: var(--mono); font-size: 10px; }
+
+.theme-grid { display: flex; flex-direction: column; }
+.theme-option {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; padding: 9px 13px; text-align: left;
+  background: none; border: 0; border-left: 2px solid transparent;
+  color: var(--text-secondary); cursor: pointer;
+}
+.theme-option:hover { background: var(--surface-2); color: var(--text-primary); }
+.theme-option[aria-pressed="true"] {
+  background: var(--surface-2); color: var(--text-primary);
+  border-left-color: var(--series-1);
+}
+
+/*
+ * The swatch previews the theme's real tokens. `data-theme` on the swatch
+ * itself makes the nested custom properties resolve to that theme's values, so
+ * this stays correct when the palette changes -- no second copy of the hexes.
+ */
+.theme-swatch {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  width: 62px; height: 22px; flex: 0 0 auto;
+  border-radius: var(--radius-sm); overflow: hidden;
+  border: 1px solid var(--border-strong);
+}
+.theme-swatch > span { display: block; height: 100%; }
+
+.theme-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.theme-name { font-size: 12.5px; font-weight: 550; }
+.theme-blurb { font-size: 10.5px; color: var(--text-muted); line-height: 1.35; }
+
+/* ---------------- market board ---------------- */
+
+.seg-head {
+  padding: 9px 14px 6px; font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.055em; color: var(--text-muted);
+  border-top: 1px solid var(--border); background: var(--surface-2);
+}
+.seg-head:first-child { border-top: none; }
+
+.inst { display: flex; flex-direction: column; gap: 1px; }
+.inst-label { font-size: 12.5px; }
+.inst-sym {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10.5px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+/*
+ * The proxy marker. SPY and ES track closely intraday and diverge overnight,
+ * which is exactly when a futures board gets opened -- so the substitution is
+ * marked on the row itself rather than in a footnote nobody scrolls to.
+ */
+.proxy-tag {
+  padding: 0 4px; border-radius: 3px; font-size: 10px;
+  border: 1px dashed var(--border-strong); color: var(--status-warning);
+  cursor: help;
+}
+
+/* ---------------- impact feed ---------------- */
+
+.news-row {
+  display: flex; gap: 12px; padding: 10px 14px;
+  border-bottom: 1px solid var(--grid);
+}
+.news-row:last-child { border-bottom: none; }
+.news-row:hover { background: var(--surface-2); }
+
+.news-impact { flex: 0 0 74px; display: flex; flex-direction: column; gap: 4px; }
+/*
+ * The meter is never the only channel: the score and the band name sit under
+ * it. A coloured bar alone would make the ranking unreadable to anyone who
+ * cannot separate the band colours, and a bar with no number invites trust in
+ * a measurement the reader cannot check.
+ */
+.news-meter { height: 5px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.news-meter > div { height: 100%; border-radius: 3px; }
+.news-score { display: flex; align-items: baseline; gap: 6px; }
+.news-score strong { font-size: 14px; font-variant-numeric: tabular-nums; }
+.news-score .band { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.news-body { min-width: 0; flex: 1; }
+.news-title { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 12.5px; }
+.news-title a { color: var(--text-primary); text-decoration: none; }
+.news-title a:hover { text-decoration: underline; }
+.news-meta {
+  display: flex; flex-wrap: wrap; gap: 10px; margin-top: 3px;
+  font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums;
+}
+.news-meta .warn { color: var(--status-warning); }
+
+/* ---------------- charting ---------------- */
+
+.tier { border-top: 1px solid var(--border); padding: 12px 14px; }
+.tier:first-child { border-top: none; }
+.tier-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+.tier-name { font-size: 12.5px; font-weight: 600; }
+.tier-body .kv { padding: 4px 0; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+.dot.on { background: var(--status-good); }
+.dot.off { background: var(--axis); }
+.blocked { margin: 8px 0 0; padding-left: 18px; font-size: 11px; color: var(--text-muted); }
+.blocked li { margin-bottom: 2px; }
+.tradingview-widget-container { width: 100%; }
+
+/*
+ * Empty state for a panel whose content comes from a third party. Centred and
+ * width-limited so it reads as a deliberate message rather than as a caption
+ * stranded in a blank rectangle — which is what an unstyled failure looks like,
+ * and it reads as a broken page instead of a stated limitation.
+ */
+/* Covers a TradingView host while it is loading or after it failed. Absolute
+ * rather than a sibling, because the host must stay mounted — it is the node
+ * the load poll is watching. */
+.tv-overlay {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: var(--bg-secondary); border-radius: inherit; padding: 12px;
+}
+.tv-overlay .tiny { display: inline-flex; align-items: center; gap: 7px; }
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; padding: 24px; text-align: center; color: var(--text-muted);
+}
+.empty-state strong { color: var(--text-secondary); font-size: 13px; }
+.empty-state p { max-width: 62ch; margin: 0; font-size: 12px; line-height: 1.55; }
+
+/* ============================ workspace shell ============================ */
+/*
+ * Codex-grade restraint. Everything here is deliberately plain: one surface for
+ * the chrome, one type size, 30px rows, a 2px bar for the active item. The
+ * previous version's glow and gradients read as amateur precisely because they
+ * competed with the content — application chrome should be invisible until you
+ * look for it.
+ */
+
+/*
+ * Two columns, two rows. The header occupies row 1 across BOTH columns, which
+ * is what makes it one piece — there is no element boundary inside it to show
+ * through as a seam. The rail and the content share row 2, and the vertical
+ * divider belongs to the rail, so it starts under the header rather than
+ * running up through it.
+ */
+.shell-root {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  grid-template-rows: var(--header-h) minmax(0, 1fr);
+  min-height: 100vh;
+  transition: grid-template-columns var(--dur-panel) var(--ease);
+}
+.shell-root.is-collapsed { grid-template-columns: 52px minmax(0, 1fr); }
+
+.app-header {
+  grid-column: 1 / -1; grid-row: 1;
+  display: grid;
+  /* Inherits the parent's column track so the brand block lines up with the
+   * rail exactly, and keeps doing so through the collapse transition. */
+  grid-template-columns: subgrid;
+  height: var(--header-h);
+  background: var(--chrome-bg);
+  border-bottom: 1px solid var(--chrome-border);
+  position: sticky; top: 0; z-index: 40;
+}
+/* subgrid is well supported now, but a browser without it would collapse the
+ * two-cell header into one. The fallback keeps the same proportions. */
+@supports not (grid-template-columns: subgrid) {
+  .app-header { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); }
+  .shell-root.is-collapsed .app-header { grid-template-columns: 52px minmax(0, 1fr); }
+}
+
+.header-brand { display: flex; align-items: center; padding: 0 8px 0 10px; min-width: 0; }
+.header-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 12px; min-width: 0;
+}
+
+.rail-nav {
+  grid-row: 2;
+  display: flex; flex-direction: column;
+  background: var(--chrome-bg);
+  border-right: 1px solid var(--chrome-border);
+  position: sticky; top: var(--header-h); height: calc(100vh - var(--header-h));
+  overflow: hidden;
+}
+.rail-title {
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+  background: none; border: 0; padding: 5px 6px; margin: 0;
+  border-radius: var(--radius-sm); cursor: pointer;
+  color: var(--text-primary); font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: -0.005em; white-space: nowrap;
+  transition: background var(--dur-hover) ease;
+}
+.rail-title:hover { background: var(--chrome-bg-2); }
+.brand-mark { width: 17px; height: 17px; flex: 0 0 auto; }
+.rail-caret { color: var(--text-muted); flex: 0 0 auto; }
+.rail-icon-btn {
+  display: grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto;
+  border-radius: var(--radius-sm); color: var(--text-muted);
+  background: none; border: 0; cursor: pointer;
+  transition: background var(--dur-hover) ease, color var(--dur-hover) ease;
+}
+.rail-icon-btn:hover { background: var(--chrome-bg-2); color: var(--text-primary); }
+
+.rail-groups { flex: 1; overflow-y: auto; padding: 8px 8px 0; }
+.rail-group { margin-bottom: 14px; }
+/* Small grey section labels, sentence case — not uppercase tracking, which
+ * reads as a shouted heading in a 260px column. */
+.rail-group-label {
+  padding: 4px 8px 5px; font-size: 0.6875rem; font-weight: 500;
+  color: var(--text-muted); letter-spacing: 0;
+}
+.rail-link {
+  display: flex; align-items: center; gap: 9px;
+  height: 30px; padding: 0 8px; margin-bottom: 1px;
+  border-radius: var(--radius-sm); position: relative;
+  color: var(--text-secondary); text-decoration: none;
+  font-size: 0.8125rem; white-space: nowrap;
+  transition: background var(--dur-hover) ease, color var(--dur-hover) ease;
+}
+.rail-link svg { flex: 0 0 auto; opacity: 0.85; }
+.rail-link:hover { background: var(--chrome-bg-2); color: var(--text-primary); }
+
+/* The whole active treatment: a lighter row and a 2px bar. Legible at a glance,
+ * survives a screenshot, does not compete with a chart. */
+.rail-link[aria-current="page"] {
+  background: var(--chrome-bg-2);
+  color: var(--text-primary);
+}
+.rail-link[aria-current="page"]::before {
+  content: ""; position: absolute; left: -8px; top: 6px; bottom: 6px;
+  width: 2px; border-radius: 0 2px 2px 0; background: var(--accent-brand);
+}
+.rail-link[aria-current="page"] svg { opacity: 1; }
+
+.rail-foot { flex: 0 0 auto; padding: 8px; border-top: 1px solid var(--chrome-border); }
+.rail-account {
+  display: flex; align-items: center; gap: 9px;
+  padding: 5px 6px; border-radius: var(--radius-sm);
+}
+.avatar {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--chrome-bg-2); border: 1px solid var(--chrome-border);
+  font-size: 0.5625rem; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+.account-name {
+  display: flex; flex-direction: column; min-width: 0;
+  font-size: 0.75rem; color: var(--text-secondary); line-height: 1.3;
+}
+.account-name small { font-size: 0.6875rem; color: var(--text-muted); }
+
+.is-collapsed .rail-label { display: none; }
+.is-collapsed .rail-link { justify-content: center; padding: 0; }
+.is-collapsed .rail-link[aria-current="page"]::before { left: -8px; }
+.is-collapsed .header-brand { padding: 0; justify-content: center; }
+.is-collapsed .rail-title { flex: 0 0 auto; justify-content: center; padding: 5px; }
+.is-collapsed .rail-group-label { display: none; }
+.is-collapsed .rail-account { justify-content: center; padding: 5px 0; }
+
+.shell-main { display: flex; flex-direction: column; min-width: 0; }
+
+.topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.workspace { flex: 1; min-width: 0; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.workspace.is-reading {
+  max-width: var(--reading-w); width: 100%; margin: 0 auto;
+  padding: 0 16px; gap: 0;
+}
+
+.pulse-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto;
+  display: inline-block; vertical-align: middle;
+  background: var(--accent-brand);
+  box-shadow: 0 0 0 0 var(--accent-surface);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-surface); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+/* Reduced motion gets a static dot, not a removed one: it carries state, so
+ * taking it away costs the user information rather than saving them motion. */
+
+/* ============================ symbol search ============================= */
+
+.symsearch { position: relative; }
+.symsearch-trigger {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 10px; min-width: 190px;
+  background: var(--bg-tertiary); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill); color: var(--text-secondary);
+  font-size: 0.8125rem; cursor: pointer;
+  transition: border-color var(--dur-hover) ease, background var(--dur-hover) ease;
+}
+.symsearch-trigger:hover { border-color: var(--border-strong); }
+.symsearch-value { font-weight: 600; color: var(--text-primary); letter-spacing: 0.01em; }
+.symsearch-trigger kbd {
+  margin-left: auto; font-family: var(--mono); font-size: 0.6875rem;
+  color: var(--text-muted); border: 1px solid var(--border-subtle);
+  border-radius: 4px; padding: 1px 4px;
+}
+
+.symsearch-panel {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 60;
+  width: 420px; max-width: 90vw;
+  background: var(--chrome-bg-2); border: 1px solid var(--chrome-border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--glow-soft);
+}
+.symsearch-input {
+  width: 100%; padding: 12px 14px; border: 0; outline: none;
+  background: var(--chrome-bg); color: var(--text-primary); font-size: 0.9375rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.symsearch-list { max-height: 300px; overflow-y: auto; }
+.symsearch-row {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 9px 14px; background: none; border: 0; cursor: pointer; text-align: left;
+  color: var(--text-secondary); font-size: 0.8125rem;
+}
+.symsearch-row[aria-selected="true"] {
+  background: var(--glow-soft); color: var(--text-primary);
+  box-shadow: inset 2px 0 0 var(--accent-brand);
+}
+.symsearch-row .sym { font-weight: 600; min-width: 52px; color: var(--text-primary); }
+.symsearch-row .desc { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.symsearch-row .quote { margin-left: auto; font-variant-numeric: tabular-nums; }
+.symsearch-empty { padding: 16px; color: var(--text-muted); font-size: 0.8125rem; }
+.symsearch-warn {
+  padding: 10px 14px; font-size: 0.75rem; line-height: 1.5;
+  color: var(--text-secondary); border-top: 1px solid var(--border-subtle);
+  background: color-mix(in oklab, var(--status-warning) 10%, transparent);
+}
+.warnchip { border-color: var(--status-warning); color: var(--status-warning); }
+
+/* ================================ agent ================================= */
+
+.agent-stream {
+  flex: 1; overflow-y: auto; padding: 28px 0 140px;
+  display: flex; flex-direction: column; gap: 20px;
+}
+.agent-intro { padding: 40px 0 8px; }
+.agent-intro h1 { margin: 0 0 10px; }
+.agent-intro p { margin: 0 0 14px; color: var(--text-secondary); }
+.agent-engine { display: flex; align-items: center; gap: 8px; margin-bottom: 18px !important; }
+.agent-note { margin-top: 20px !important; color: var(--text-muted); line-height: 1.6; }
+
+.agent-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+.suggestion {
+  padding: 8px 14px; border-radius: var(--radius-pill);
+  background: var(--bg-tertiary); border: 1px solid var(--border-subtle);
+  color: var(--text-secondary); font-size: 0.8125rem; cursor: pointer; text-align: left;
+  transition: border-color var(--dur-hover) ease, color var(--dur-hover) ease;
+}
+.suggestion:hover { border-color: var(--border-strong); color: var(--text-primary); }
+
+/*
+ * Assistant turns have no bubble: text sits directly on the canvas, which is
+ * the most readable arrangement for long output. Only the user's own messages
+ * get a container, because those are short and benefit from being locatable.
+ */
+.msg-user {
+  align-self: flex-end; max-width: 80%;
+  background: var(--accent-user-bubble);
+  border: 1px solid var(--border-subtle);
+  padding: 12px 18px; border-radius: 18px;
+  font-size: 0.9375rem; line-height: 1.6;
+}
+.msg-agent { display: flex; flex-direction: column; gap: 10px; }
+.msg-body p { margin: 0 0 8px; font-size: 0.9375rem; line-height: 1.6; }
+.msg-body p:last-child { margin-bottom: 0; }
+
+.thinking { display: inline-flex; gap: 5px; }
+.thinking span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted);
+  animation: blink 1.4s infinite both;
+}
+.thinking span:nth-child(2) { animation-delay: 0.2s; }
+.thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+
+.tool-calls { display: flex; flex-direction: column; gap: 8px; }
+.code-block {
+  background: var(--code-bg); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm); overflow: hidden;
+}
+.code-header {
+  background: var(--code-header-bg); padding: 8px 14px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;
+  font-family: var(--mono);
+}
+.code-block pre {
+  margin: 0; padding: 12px 14px; overflow-x: auto;
+  font-family: var(--mono); font-size: 0.84rem; line-height: 1.5;
+  color: var(--text-secondary);
+}
+.agent-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.composer-wrap {
+  position: sticky; bottom: 0; padding: 0 0 16px;
+  background: linear-gradient(to top, var(--bg-primary) 62%, transparent);
+}
+.composer-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 12px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.composer-box:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+.composer-input {
+  flex: 1; background: none; border: 0; outline: none;
+  color: var(--text-primary); font-size: 0.9375rem;
+}
+.composer-input::placeholder { color: var(--text-muted); }
+.composer-send {
+  display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto;
+  border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--accent-brand); color: #fff;
+  transition: background var(--dur-hover) ease, opacity var(--dur-hover) ease;
+}
+.composer-send:hover:not(:disabled) { background: var(--accent-brand-hover); }
+.composer-send:disabled { opacity: 0.4; cursor: default; }
+.composer-foot { margin: 8px 4px 0; color: var(--text-muted); }
+
+/* ============================== type scale ============================== */
+
+.type-heading-lg { font-size: 1.5rem;   line-height: 1.3; font-weight: 600; letter-spacing: -0.015em; }
+.type-heading-md { font-size: 1.125rem; line-height: 1.4; font-weight: 600; letter-spacing: -0.01em; }
+.type-body       { font-size: 0.938rem; line-height: 1.6; font-weight: 400; }
+.type-caption    { font-size: 0.75rem;  line-height: 1.4; font-weight: 500; color: var(--text-secondary); }
+.type-code       { font-size: 0.84rem;  line-height: 1.5; font-family: var(--mono); }
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-root, .rail-link, .composer-box, .suggestion { transition: none; }
+  .pulse-dot, .thinking span { animation: none; }
+}
+
+@media (max-width: 900px) {
+  /* The rail becomes an icon column rather than an overlay: an overlay that
+   * covers the workspace on a narrow screen is worse than a 60px strip. */
+  .shell-root, .shell-root.is-collapsed { grid-template-columns: 60px minmax(0, 1fr); }
+  .rail-label, .rail-brand-text { display: none; }
+  .rail-link { justify-content: center; padding: 9px 0; }
+}
+
+/* ============================== live state ============================== */
+
+.live-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.6875rem; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.live-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: 0; cursor: pointer; padding: 0;
+  color: var(--text-secondary); font-size: 0.6875rem;
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+/*
+ * The dot carries state and the age carries evidence. A "live" badge with no
+ * timestamp is indistinguishable from a badge on a feed that died twenty
+ * minutes ago — which is the exact thing it is supposed to rule out.
+ */
+.pulse-dot.is-paused { background: var(--text-muted); animation: none; box-shadow: none; }
+.pulse-dot.is-error { background: var(--status-critical); animation: none; box-shadow: none; }
+.live-age { color: var(--text-muted); }
+.live-refresh {
+  background: none; border: 0; padding: 2px; cursor: pointer;
+  color: var(--text-muted); border-radius: 4px; display: inline-grid; place-items: center;
+  transition: color var(--dur-hover) ease, background var(--dur-hover) ease;
+}
+.live-refresh:hover:not(:disabled) { color: var(--text-primary); background: var(--bg-tertiary); }
+.live-refresh:disabled { opacity: 0.4; cursor: default; }
+
+.sym-field {
+  text-transform: uppercase; font-weight: 600; letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.filter-chip { cursor: pointer; }
+.filter-chip[aria-pressed="true"] {
+  border-color: var(--accent-brand); color: var(--accent-brand);
+  background: var(--accent-surface);
+}
+
+/* ============================ market strip ============================== */
+
+.market-strip {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg-secondary) var(--glass-mix), transparent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  margin-bottom: 26px; overflow: hidden;
+}
+.strip-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-bottom: 1px solid var(--border-subtle);
+}
+.strip-rows {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 1px; background: var(--border-subtle);
+}
+.strip-cell { background: var(--bg-secondary); padding: 9px 11px; }
+.strip-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.strip-name {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em;
+}
+.strip-bottom {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 6px;
+  margin-top: 3px; font-variant-numeric: tabular-nums;
+}
+.strip-last { font-size: 0.9375rem; font-weight: 600; }
+.strip-bottom span:last-child { font-size: 0.75rem; }
+
+/* ============================== entry cards ============================= */
+
+.entry-cards {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 10px; margin-bottom: 16px;
+}
+.entry-card {
+  display: flex; flex-direction: column; gap: 5px; align-items: flex-start;
+  padding: 14px; text-align: left; cursor: pointer;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  transition: border-color var(--dur-hover) ease, background var(--dur-hover) ease,
+              box-shadow var(--dur-hover) ease;
+}
+.entry-card:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-tertiary);
+  box-shadow: 0 0 22px -10px var(--glow);
+}
+.entry-label { font-size: 0.875rem; font-weight: 550; color: var(--text-primary); }
+.entry-hint { font-size: 0.75rem; color: var(--text-muted); line-height: 1.35; }
+
+.composer-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 9px 4px 0;
+}
+.composer-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle); background: var(--bg-secondary);
+  color: var(--text-secondary); font-size: 0.6875rem; cursor: default;
+}
+.composer-pill.toggle { cursor: pointer; }
+.composer-pill.toggle[aria-pressed="true"] {
+  border-color: var(--accent-brand); color: var(--accent-brand);
+  background: var(--accent-surface);
+}
+.composer-bar .composer-foot { margin: 0 0 0 auto; }
+
+/* ============================== trading terminal ============================ */
+/*
+ * The terminal layout: symbol header, chart, symbol/scan column, execution rail
+ * and a headline ticker along the bottom.
+ *
+ * Colours come from the theme tokens, not from hard-coded hexes, so all four
+ * themes get a terminal rather than the dark one getting a terminal and the
+ * other three getting a broken one.
+ */
+
+.terminal {
+  display: grid;
+  /* Chart, symbol column, execution rail. The 1px gap over a border-coloured
+   * background draws every divider at once — three columns and no seams to
+   * keep aligned by hand. */
+  grid-template-columns: minmax(0, 1fr) 290px 290px;
+  gap: 1px;
+  background: var(--chrome-border);
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.terminal > * { background: var(--bg-primary); }
+@media (max-width: 1500px) {
+  .terminal { grid-template-columns: minmax(0, 1fr) 290px; }
+  /* The execution rail drops under the chart rather than squeezing the symbol
+   * column, which is the one carrying the numbers. */
+  .exec-panel { grid-column: 1 / -1; border-left: 0; border-top: 1px solid var(--chrome-border); }
+  .exec-lock { position: static; margin: 0 auto; }
+  .exec-body { display: none; }
+}
+@media (max-width: 1000px) {
+  .terminal { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* --- symbol header --- */
+.term-head {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--chrome-border);
+  border-radius: var(--radius);
+}
+.term-ticker { display: flex; align-items: baseline; gap: 8px; }
+.term-ticker h1 {
+  margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em;
+}
+.term-ticker .badge {
+  padding: 2px 7px; border-radius: var(--radius-sm);
+  font-size: 0.625rem; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--accent-brand); background: var(--accent-surface);
+  border: 1px solid var(--accent-brand);
+}
+.term-sub {
+  font-size: 0.625rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- panels --- */
+.term-panel { display: flex; flex-direction: column; min-width: 0; }
+.term-panel-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; flex: 0 0 auto;
+  border-bottom: 1px solid var(--chrome-border);
+  font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- symbol statistics --- */
+.sym-panel { padding: 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+.sym-name { font-size: 0.8125rem; font-weight: 600; }
+.sym-meta { font-size: 0.6875rem; color: var(--text-muted); }
+.sym-price {
+  display: flex; align-items: baseline; gap: 6px;
+  font-size: 1.75rem; font-weight: 700; letter-spacing: -0.02em;
+}
+.sym-price small { font-size: 0.6875rem; color: var(--text-muted); font-weight: 500; }
+.sym-change { font-size: 0.8125rem; font-weight: 600; margin-top: -6px; }
+
+.range-row {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+  gap: 8px; font-size: 0.6875rem; color: var(--text-muted);
+}
+.range-label {
+  grid-column: 1 / -1; font-size: 0.625rem; letter-spacing: 0.08em;
+  text-transform: uppercase; margin-top: -6px;
+}
+.range-track {
+  position: relative; height: 4px; border-radius: 2px;
+  background: var(--bg-tertiary); overflow: visible;
+}
+.range-fill {
+  position: absolute; inset: 0 auto 0 0; border-radius: 2px;
+  background: var(--accent-brand); opacity: 0.5;
+}
+.range-mark {
+  position: absolute; top: 50%; width: 8px; height: 8px; border-radius: 50%;
+  transform: translate(-50%, -50%); background: var(--text-primary);
+  border: 2px solid var(--bg-primary);
+}
+.range-end { color: var(--text-secondary); }
+
+.sym-stats { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.sym-note { margin: 0; font-size: 0.6875rem; color: var(--text-muted); line-height: 1.5; }
+.err-text { color: var(--status-critical); }
+
+/* --- series scan --- */
+.scan-sheet {
+  border-top: 1px solid var(--chrome-border);
+  display: flex; flex-direction: column;
+}
+.scan-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; font-size: 0.75rem;
+  border-bottom: 1px solid var(--chrome-border);
+}
+.scan-list { display: flex; flex-direction: column; }
+.scan-item {
+  display: flex; gap: 10px; padding: 9px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.scan-icon { flex: 0 0 auto; margin-top: 2px; color: var(--text-muted); }
+.scan-icon.k-trend, .scan-icon.k-momentum { color: var(--series-1); }
+.scan-icon.k-volatility { color: var(--series-4); }
+.scan-icon.k-support { color: var(--status-good); }
+.scan-icon.k-resistance { color: var(--status-critical); }
+.scan-label { font-size: 0.75rem; font-weight: 600; }
+.scan-detail { font-size: 0.6875rem; color: var(--text-muted); line-height: 1.5; }
+.scan-note {
+  margin: 0; padding: 10px 12px; font-size: 0.6875rem; line-height: 1.55;
+  color: var(--text-muted); background: var(--bg-secondary);
+}
+
+/* --- depth --- */
+.depth-panel { display: flex; flex-direction: column; }
+.depth-top {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 1px;
+  background: var(--chrome-border);
+}
+.depth-side, .depth-mid {
+  background: var(--bg-primary); padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.depth-side .num, .depth-mid .num { font-size: 1rem; font-weight: 600; }
+.depth-side.bid .num { color: var(--status-good); }
+.depth-side.ask .num { color: var(--status-critical); }
+.depth-side.ask { text-align: right; align-items: flex-end; }
+.depth-mid { align-items: center; min-width: 110px; }
+.depth-tag {
+  font-size: 0.5625rem; letter-spacing: 0.1em; color: var(--text-muted);
+}
+.depth-mid small { font-size: 0.625rem; color: var(--text-muted); }
+
+/* --- execution --- */
+.exec-panel {
+  display: flex; flex-direction: column; position: relative;
+  border-left: 1px solid var(--chrome-border);
+  background: var(--bg-secondary);
+}
+.exec-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px; flex: 0 0 auto;
+  border-bottom: 1px solid var(--chrome-border);
+  font-size: 0.6875rem; letter-spacing: 0.12em; color: var(--text-secondary);
+}
+.exec-status {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.625rem; color: var(--text-muted);
+}
+.exec-status .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--status-critical);
+}
+/* The ticket behind the lock: real controls, disabled and blurred. It is what
+ * would become live, which is the point of showing it at all. */
+.exec-body {
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  filter: blur(3px); opacity: 0.4; pointer-events: none; user-select: none;
+}
+.exec-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.exec-side {
+  padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+  background: var(--bg-tertiary); color: var(--text-secondary);
+}
+.exec-side.buy { background: var(--accent-surface); color: var(--status-good); }
+.exec-side.sell { color: var(--status-critical); }
+
+.exec-lock {
+  position: absolute; inset: 44px 0 auto; margin: auto;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 28px 20px; text-align: center;
+}
+.exec-lock strong { font-size: 0.9375rem; }
+.exec-lock p {
+  margin: 0; font-size: 0.6875rem; line-height: 1.55; color: var(--text-muted);
+  max-width: 34ch;
+}
+.lock-icon {
+  display: grid; place-items: center; width: 46px; height: 46px;
+  border-radius: 50%; background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle); color: var(--text-secondary);
+}
+.exec-foot {
+  margin: auto 0 0; padding: 10px 14px; font-size: 0.625rem; line-height: 1.5;
+  color: var(--text-muted); border-top: 1px solid var(--chrome-border);
+}
+
+/* --- headline ticker --- */
+.news-ticker {
+  display: flex; align-items: center; gap: 10px;
+  height: 30px; flex: 0 0 auto; overflow: hidden;
+  background: var(--chrome-bg);
+  border-top: 1px solid var(--chrome-border);
+}
+.ticker-tag {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
+  padding: 0 12px; height: 100%;
+  font-size: 0.625rem; letter-spacing: 0.1em; color: var(--text-secondary);
+  border-right: 1px solid var(--chrome-border);
+}
+.ticker-viewport { overflow: hidden; flex: 1; min-width: 0; }
+.ticker-track {
+  display: flex; gap: 28px; white-space: nowrap; width: max-content;
+  animation: ticker 90s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes ticker {
+  from { transform: translateX(0); }
+  /* -50% because the list is rendered twice; at half the width the second copy
+   * is exactly where the first started, so the reset is invisible. */
+  to { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.75rem; color: var(--text-secondary); text-decoration: none;
+}
+.ticker-item:hover { color: var(--text-primary); }
+.ticker-item small { color: var(--text-muted); font-size: 0.625rem; }
+.ticker-item b { font-weight: 700; font-size: 0.6875rem; }
+.t-high { color: var(--status-critical); }
+.t-elevated { color: var(--status-serious); }
+.t-moderate { color: var(--status-warning); }
+.t-low { color: var(--text-muted); }
+.t-unscored { color: var(--text-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  /* A scrolling strip is the clearest case for honouring this: the headlines
+   * still need to be readable, so it stops rather than disappearing. */
+  .ticker-track { animation: none; }
+  .ticker-viewport { overflow-x: auto; }
+}
+.sym-proxy {
+  margin-top: 5px; padding: 5px 7px; border-radius: var(--radius-sm);
+  font-size: 0.625rem; line-height: 1.45; color: var(--status-warning);
+  background: var(--bg-tertiary); border: 1px solid var(--border-subtle);
+}
+
+/* Broker adapters, listed with their real state. */
+.broker-list { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 4px; }
+.broker-row { text-align: left; }
+.broker-name {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 0.75rem; font-weight: 600;
+}
+.broker-row p {
+  margin: 3px 0 0; font-size: 0.625rem; line-height: 1.5; color: var(--text-muted);
+}
+.broker-name .dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
+.broker-name .dot.on { background: var(--status-good); }
+.broker-name .dot.off { background: var(--text-muted); }
