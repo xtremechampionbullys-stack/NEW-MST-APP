@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Shell } from '@/components/Shell'
 import { SymbolSearch } from '@/components/SymbolSearch'
-import { CandleChart, type Candle } from '@/components/CandleChart'
+import { CandleChart, type Candle, type OverlayLayers } from '@/components/CandleChart'
+import { LayerToggles, LiquidityPanel } from '@/components/LiquidityPanel'
 import { LiveBadge, SymbolField, useLive } from '@/components/live'
 import { ChainGrid } from '@/components/ChainGrid'
 import { TvWidget } from '@/components/TradingView'
@@ -11,7 +12,7 @@ import {
   DepthPanel, ExecutionPanel, NewsTicker, ScanPanel, SymbolPanel,
 } from '@/components/Terminal'
 import { api } from '@/lib/api'
-import type { ChainResponse, KeyStats, OptionsLevels, TvStatus, TvTier } from '@/lib/types'
+import type { ChainResponse, KeyStats, LiquidityMap, OptionsLevels, TvStatus, TvTier } from '@/lib/types'
 
 // The strip TradingView renders at the top of the page. Real contracts, their
 // data — the one place in this app showing genuine live prices.
@@ -130,6 +131,8 @@ export default function ChartingPage() {
   const [tall, setTall] = useState(false)
   const [scanOpen, setScanOpen] = useState(false)
   const [side, setSide] = useState<'stats' | 'depth'>('stats')
+  const [layers, setLayers] = useState<OverlayLayers>(
+    { zones: true, levels: true, liquidity: true, profile: true })
 
   const selectSymbol = (next: string, exchange?: string) => {
     const ticker = next.trim().toUpperCase()
@@ -152,7 +155,9 @@ export default function ChartingPage() {
   // Library would call. If this chart is right, that integration is right.
   const bars = useLive<Candle[]>(
     async () => {
-      const h = await api.udfHistory(native, 260)
+      // ~260 sessions, the same window the liquidity map below is computed
+      // over, so every zone it reports can be drawn on a candle that is here.
+      const h = await api.udfHistory(native, 380)
       if (h.s !== 'ok' || !h.t) return []
       return h.t.map((t, i) => ({
         t, o: h.o![i], h: h.h![i], l: h.l![i], c: h.c![i], v: h.v![i],
@@ -161,6 +166,10 @@ export default function ChartingPage() {
     [native],
     20000,
   )
+
+  // Order blocks, liquidity pools and support/resistance, computed from the
+  // same bars as the candle chart they are drawn over.
+  const liq = useLive<LiquidityMap>(() => api.liquidity(native, 260), [native], 60000)
 
   const stats = useLive<KeyStats>(() => api.keyStats(plainTicker(symbol)), [symbol], 15000)
   const levels = useLive<OptionsLevels>(
@@ -306,20 +315,24 @@ export default function ChartingPage() {
         <div className="card">
           <div className="card-head">
             <div>
-              <h2>{native} — this app&apos;s data</h2>
+              <h2>{native} — volume, order &amp; liquidity map</h2>
               <span className="sub">
-                daily candles and volume, served by the same UDF datafeed the
-                TradingView Charting Library would read
+                order blocks with per-zone counters, resting liquidity and
+                support / resistance — computed from this app&apos;s own daily bars
               </span>
             </div>
-            <div className="row" style={{ gap: 8 }}>
+            <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+              <LayerToggles layers={layers} onChange={setLayers} />
               <SymbolField value={native} onChange={setNative} />
+              {liq.data?.synthetic && <span className="chip">synthetic bars</span>}
               <LiveBadge state={bars} />
             </div>
           </div>
           <div className="card-body flush">
             {bars.data && bars.data.length > 1 ? (
-              <CandleChart candles={bars.data} symbol={native} />
+              <CandleChart candles={bars.data} symbol={native} height={460}
+                overlay={liq.data?.symbol === native.toUpperCase() ? liq.data : null}
+                layers={layers} />
             ) : bars.error ? (
               <div className="chart-unavailable" role="status">
                 <strong>App-side candle data is unavailable</strong>
@@ -330,6 +343,9 @@ export default function ChartingPage() {
             )}
           </div>
           {bars.error && <div className="err">{bars.error}</div>}
+          {liq.data && liq.data.symbol === native.toUpperCase()
+            ? <LiquidityPanel data={liq.data} />
+            : liq.error && <div className="err">Liquidity map unavailable: {liq.error}</div>}
         </div>
 
         {/*

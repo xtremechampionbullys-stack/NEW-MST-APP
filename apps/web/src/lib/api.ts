@@ -5,6 +5,7 @@ import type {
   AlgoStatus,
   AlgoStrategy,
   GateConfig,
+  LiquidityMap,
   OptionsLevels,
   TrafficSummary,
   AgentTurn,
@@ -238,6 +239,9 @@ export const api = {
   algoRejectPending: (id: string) =>
     request<Record<string, unknown>>(`/api/algo/pending/${id}/reject`, { method: 'POST' }),
   algoTraffic: () => request<TrafficSummary>('/api/algo/traffic'),
+
+  liquidity: (symbol: string, limit = 260) =>
+    request<LiquidityMap>(`/api/market/liquidity/${encodeURIComponent(symbol)}?limit=${limit}`),
 
   optionsLevels: (symbol: string, expiration?: string) =>
     request<OptionsLevels>(`/api/market/levels/${encodeURIComponent(symbol)}` +

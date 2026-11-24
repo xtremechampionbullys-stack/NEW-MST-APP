@@ -267,6 +267,12 @@ class SyntheticProvider(BaseProvider):
             day -= dt.timedelta(days=1)
         session_days.reverse()
 
+        # Trade counts come from their own generator so that adding them did
+        # not shift a single draw of `rng` above: every price and volume in the
+        # series is byte-for-byte what it was before this field existed.
+        trade_rng = random.Random(_seed_for(symbol) ^ 0x7ADE5)
+        lot = trade_rng.uniform(110.0, 320.0)       # typical shares per print
+
         bars: list[Bar] = []
         for i, day in enumerate(session_days):
             c = closes[i]
@@ -279,6 +285,8 @@ class SyntheticProvider(BaseProvider):
                 t=dt.datetime.combine(day, dt.time(20, 0), dt.timezone.utc),
                 o=round(o, 2), h=round(h, 2), l=round(l, 2), c=round(c, 2),
                 v=float(int(rng.uniform(2e6, 6e7)))))
+            bars[-1].n = int(bars[-1].v / (lot * trade_rng.uniform(0.7, 1.4)))
+            bars[-1].source = self.name
         return bars
 
     async def get_bars(self, symbol: str, *, timespan: str = "day",

@@ -855,6 +855,21 @@ input[type="range"] { width: 100%; accent-color: var(--series-1); height: 18px; 
 .grid-line { stroke: var(--grid); stroke-width: 1; }
 .axis-line { stroke: var(--axis); stroke-width: 1; }
 
+/* Volume/order/liquidity overlay labels. The halo is the chart background, so
+ * a label stays legible where it crosses a candle or a zone fill. */
+.ob-label {
+  font-size: 10px; font-weight: 600; fill: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke; stroke: var(--bg-primary); stroke-width: 3px; stroke-linejoin: round;
+}
+.ob-label.liq { fill: var(--series-4); }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.swatch.line { height: 2px; }
+.swatch.dash { height: 0; border-top: 2px dashed var(--series-4); }
+.split-bar { display: flex; height: 6px; min-width: 70px; border-radius: 3px; overflow: hidden; background: var(--surface-3); }
+.split-bar > span:first-child { background: var(--status-good); }
+.split-bar > span:last-child { background: var(--status-critical); }
+
 /* Tooltips stay fully opaque in every theme: they overlay the very chart they
  * describe, and a translucent tooltip renders its own numbers on top of the
  * line they refer to. */

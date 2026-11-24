@@ -998,6 +998,77 @@ export interface TrafficSummary {
   note: string
 }
 
+/* ------------------------------------------------- volume/order/liquidity */
+
+export interface OrderBlock {
+  id: string
+  side: 'bullish' | 'bearish'
+  bottom: number; top: number; mid: number
+  /** Unix seconds, matching the candle timestamps from the UDF feed. */
+  formed_t: number; confirmed_t: number
+  status: 'fresh' | 'tested'
+  last_touch_t: number | null
+  touches: number
+  bars_in_zone: number
+  volume: number
+  /** Estimated from where each bar closed in its range — not the trade tape. */
+  buy_volume: number; sell_volume: number; delta: number
+  /** Executed trades prorated into the zone. Null when the provider reports none. */
+  orders: number | null
+  formation_volume: number
+  formation_rel_volume: number | null
+  distance_pct: number | null
+}
+
+export interface LiquidityPool {
+  /** buy = stops resting above equal highs; sell = below equal lows. */
+  side: 'buy' | 'sell'
+  price: number; touches: number
+  first_t: number; last_t: number
+  distance_pct: number | null
+}
+
+export interface PriceLevel {
+  kind: 'support' | 'resistance'
+  price: number; touches: number
+  /** 0–100, relative to the strongest level on the chart. */
+  strength: number
+  major: boolean
+  last_t: number
+  volume_at_touches: number
+  distance_pct: number | null
+}
+
+export interface VolumeProfile {
+  bins: { lo: number; hi: number; volume: number; buy_volume: number
+          sell_volume: number; orders: number | null }[]
+  poc: number; value_area_low: number; value_area_high: number
+  total_volume: number
+}
+
+export interface LiquidityMap {
+  symbol: string
+  spot: number | null
+  atr: number | null
+  bars_read: number
+  from_t: number | null; to_t: number | null
+  synthetic: boolean
+  order_count_source: string | null
+  order_blocks: OrderBlock[]
+  liquidity: LiquidityPool[]
+  levels: PriceLevel[]
+  profile: VolumeProfile | null
+  summary: {
+    nearest_support: number | null; nearest_resistance: number | null
+    major_support: number | null; major_resistance: number | null
+    bullish_zones: number; bearish_zones: number
+    zones_detected: number; zones_broken: number
+  } | null
+  method: string
+  limits: string
+  note: string
+}
+
 export interface OptionsLevels {
   symbol: string; spot: number; expiration: string; expirations: string[]
   synthetic: boolean

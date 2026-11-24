@@ -111,6 +111,11 @@ This document tracks implementation status against every acceptance criterion of
 - [x] **Settings & Four Contrast-Validated Themes**
   - *Implementation:* `apps/web/src/components/Settings.tsx`, `tools/palette_check.py`
 
+- [x] **Volume + Order + Liquidity Map (order blocks with zone counters, liquidity pools, support / major resistance, volume profile)**
+  - *Implementation:* `services/api/app/services/liquidity.py`, `GET /api/market/liquidity/{symbol}`, `apps/web/src/components/CandleChart.tsx` (overlay), `LiquidityPanel.tsx`
+  - *Tests:* `services/api/tests/test_liquidity.py`
+  - *Limit:* computed from OHLCV bars; "orders" is the provider's executed-trade count per bar (Massive `n`), not an order book.
+
 ## 10. Agentic Interface
 - [x] **Deterministic Intent Router & Tool Calls**
   - *Implementation:* `services/api/app/services/agent.py`

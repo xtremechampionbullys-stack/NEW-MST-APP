@@ -262,6 +262,29 @@ async def chart_scan(symbol: str, provider: str | None = None,
     return scan(symbol, bar_rows, quote_data)
 
 
+@router.get("/liquidity/{symbol}")
+async def liquidity(symbol: str, provider: str | None = None,
+                    limit: int = Query(260, ge=40, le=2000),
+                    max_zones: int = Query(6, ge=1, le=12)):
+    """
+    Volume + order + liquidity map: order blocks with per-zone counters,
+    resting liquidity pools, support / resistance and a volume profile.
+
+    Arithmetic on daily bars — there is no order book behind it. See
+    services/liquidity.py for exactly what each counter is.
+    """
+    from ..services.liquidity import liquidity_map                # noqa: PLC0415
+    registry = get_registry()
+    try:
+        bar_rows = await registry.bars(symbol, timespan="day", limit=limit,
+                                       provider=provider)
+    except ProviderError as exc:
+        raise _provider_http_error(exc) from exc
+    # Spot is the last bar's close, not the live quote: zones and levels are
+    # drawn on the candles, and "above/below price" has to agree with them.
+    return liquidity_map(symbol, bar_rows, max_zones=max_zones)
+
+
 @router.get("/levels/{symbol}")
 async def options_levels(symbol: str, expiration: str | None = None,
                          provider: str | None = None):

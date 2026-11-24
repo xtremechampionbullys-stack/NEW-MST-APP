@@ -176,7 +176,9 @@ class MassiveProvider(BaseProvider):
             {"adjusted": "true", "sort": "asc", "limit": 50000})
         return [
             Bar(t=dt.datetime.fromtimestamp(r["t"] / 1000, dt.timezone.utc),
-                o=r["o"], h=r["h"], l=r["l"], c=r["c"], v=r.get("v", 0.0))
+                o=r["o"], h=r["h"], l=r["l"], c=r["c"], v=r.get("v", 0.0),
+                n=int(r["n"]) if r.get("n") is not None else None,
+                source=self.name)
             for r in (data.get("results") or [])
         ][-limit:]
 

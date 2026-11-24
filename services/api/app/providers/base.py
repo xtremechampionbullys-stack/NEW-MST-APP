@@ -86,6 +86,11 @@ class Bar:
     l: float
     c: float
     v: float = 0.0
+    # Number of trades printed in the bar, when the vendor reports it (Massive
+    # aggregates carry it as `n`). None means "not reported", which is not the
+    # same as zero: consumers must not turn a missing count into a number.
+    n: int | None = None
+    source: str = ""
 
     def to_dict(self) -> dict:
         return {"t": int(self.t.timestamp() * 1000), "o": self.o, "h": self.h,
