@@ -20,6 +20,7 @@ from .routers import (
     brokers,
     charting,
     dashboard,
+    footprint,
     harness,
     intelligence,
     library,
@@ -130,6 +131,7 @@ app.include_router(harness.router)
 app.include_router(agent_chat.router)
 app.include_router(agentics.router)
 app.include_router(algo.router)
+app.include_router(footprint.router)
 
 
 @app.get("/api/health")

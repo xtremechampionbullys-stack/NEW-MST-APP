@@ -34,6 +34,7 @@ const GROUPS: { label: string | null; items: { href: string; label: string; icon
     items: [
       { href: '/lab', label: 'Strategy Lab', icon: 'M5 19h14M7 19V9m5 10V5m5 14v-7' },
       { href: '/charting', label: 'Charting', icon: 'M4 20V4m0 16h16M8 16l4-6 3 3 5-7' },
+      { href: '/footprint', label: 'Order Flow', icon: 'M5 4v16M5 7h6M5 11h10M5 15h13M5 19h8' },
       { href: '/portfolio', label: 'Portfolio', icon: 'M4 8h16v11H4zM9 8V5h6v3M4 13h16' },
       { href: '/algo', label: 'Algo Gateway', icon: 'M13 2 4.5 12.5h5L11 22l8.5-10.5h-5z' },
       { href: '/dashboard', label: 'Dashboard', icon: 'M4 13h5l2 6 3-14 2 8h4' },

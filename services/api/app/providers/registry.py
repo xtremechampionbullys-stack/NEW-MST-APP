@@ -292,6 +292,15 @@ class ProviderRegistry:
                                   "get_news", symbols, limit=limit,
                                   provider=provider)
 
+    async def trades(self, symbol: str, *, sessions: int = 1,
+                     provider: str | None = None):
+        """Tick-level trades. Cached like bars: a tape is large and immutable
+        once its session has closed."""
+        return await self._cached(
+            f"trades:{symbol.upper()}:{sessions}",
+            self.settings.bars_cache_seconds, "get_trades", symbol,
+            sessions=sessions, provider=provider)
+
     async def aclose(self) -> None:
         for p in [*self._providers, *self._earnings]:
             closer = getattr(p, "aclose", None)

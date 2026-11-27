@@ -118,3 +118,20 @@ This document tracks implementation status against every acceptance criterion of
 - [x] **Hermes-Style Memory & Skill Scoreboards**
   - *Implementation:* `services/api/app/agentics/`
   - *Tests:* `services/api/tests/test_agentics.py`
+
+## 11. Order-Flow Footprint & POC-Defence Strategy
+- [x] **1-Minute Footprint Bars from a Trade Tape (bid × ask per row, POC, value area, delta, diagonal imbalance)**
+  - *Implementation:* `services/api/app/engine/footprint.py` (`build_footprint`)
+  - *Tests:* `services/api/tests/test_footprint.py::test_rows_poc_delta_and_value_area_on_a_hand_built_bar`, `test_diagonal_imbalance_compares_ask_with_the_bid_one_row_below`
+- [x] **POC-Defence Signal + Tick-Sequenced Backtest (limit at POC, stop beyond bar extreme, scale-out, breakeven, costs)**
+  - *Implementation:* `services/api/app/engine/footprint.py` (`find_signals`, `_simulate`, `run_backtest`)
+  - *Tests:* `test_a_limit_that_is_only_touched_does_not_fill`, `test_the_signal_bars_own_trades_can_never_fill_its_order`, `test_stop_that_prints_before_the_target_wins_even_inside_one_bar`, `test_signals_do_not_change_when_later_data_arrives`
+- [x] **Random-Entry Control, Win-Rate Interval & Walk-Forward Sweep**
+  - *Implementation:* `services/api/app/engine/footprint.py` (`random_control`, `run_sweep`)
+  - *Tests:* `test_no_edge_is_found_on_a_tape_built_without_one`, `test_scaling_out_raises_win_rate_without_adding_expectancy`, `test_sweep_scores_the_chosen_variant_on_bars_it_was_not_chosen_on`
+- [x] **Trade-Tape Sources: CSV Upload, Massive `/v3/trades` (tick-rule side), Synthetic No-Edge Tape**
+  - *Implementation:* `services/api/app/routers/footprint.py`, `services/api/app/providers/massive.py` (`get_trades`), `services/api/app/providers/synthetic.py` (`get_trades`)
+  - *Tests:* `test_massive_trades_paginate_and_are_tick_rule_classified` (mocked HTTP — **not exercised against the live vendor**), `test_upload_then_run_uses_the_real_tape_and_drops_the_synthetic_label`
+- [x] **Footprint Chart & Strategy Page**
+  - *Implementation:* `apps/web/src/app/footprint/page.tsx`, `apps/web/src/components/FootprintChart.tsx`
+- [ ] **Evidence of an edge on real trades** — not established. The only tape available during development was the synthetic one, which has no edge by construction; the default parameters lose on it after costs, as they must.

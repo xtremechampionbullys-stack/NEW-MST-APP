@@ -285,6 +285,15 @@ class SyntheticProvider(BaseProvider):
                        limit: int = 250) -> list[Bar]:
         return self._series(symbol, days=max(limit, 60))[-limit:]
 
+    async def get_trades(self, symbol: str, *, sessions: int = 1):
+        """A generated trade tape. See engine.footprint.synthetic_tape: it has
+        the texture of a tape and, by construction, no edge."""
+        from ..engine.footprint import synthetic_tape              # noqa: PLC0415
+        price, vol, *_ = _profile_for(symbol)
+        return synthetic_tape(_seed_for(symbol), sessions=sessions,
+                              start_price=price, annual_vol=vol,
+                              tick_size=0.01)
+
     def _intraday_drift(self, symbol: str, close: float, day_vol: float) -> float:
         """
         Wander the displayed last price around the day's deterministic close.

@@ -9,6 +9,7 @@ const LINKS = [
   { href: '/backtest', label: 'Backtest' },
   { href: '/research', label: 'Research' },
   { href: '/charting', label: 'Charting' },
+  { href: '/footprint', label: 'Order Flow' },
 ]
 
 export function Nav() {

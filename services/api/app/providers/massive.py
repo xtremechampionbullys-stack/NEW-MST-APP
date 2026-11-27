@@ -180,6 +180,78 @@ class MassiveProvider(BaseProvider):
             for r in (data.get("results") or [])
         ][-limit:]
 
+    async def get_trades(self, symbol: str, *, sessions: int = 1,
+                         max_pages: int = 40):
+        """
+        Tick-level trades from /v3/trades, for a footprint.
+
+        Two things about this endpoint shape what comes back:
+
+        * It needs a plan with trade-level data; lower tiers are refused, and
+          the registry then reports that rather than substituting bars.
+        * US equity trades carry **no aggressor flag**. Side is inferred with
+          the tick rule and the tape is marked "tick_rule" so every consumer
+          can say that delta is an estimate.
+
+        Only regular-session prints (13:30-20:00 UTC covers both DST states of
+        09:30-16:00 ET with margin) are requested, newest sessions last. Pages
+        are capped: a liquid name prints millions of trades a day and an
+        unbounded loop would sit on the rate limit for minutes.
+        """
+        import numpy as np                                         # noqa: PLC0415
+        from ..engine.footprint import TradeTape, tick_rule        # noqa: PLC0415
+
+        sym = symbol.upper()
+        days: list[dt.date] = []
+        d = dt.date.today()
+        while len(days) < sessions and (dt.date.today() - d).days < sessions * 2 + 7:
+            if d.weekday() < 5:
+                days.append(d)
+            d -= dt.timedelta(days=1)
+
+        ts: list[float] = []
+        px: list[float] = []
+        sz: list[float] = []
+        pages = 0
+        for day in reversed(days):
+            lo = dt.datetime.combine(day, dt.time(13, 30), dt.timezone.utc)
+            hi = dt.datetime.combine(day, dt.time(21, 0), dt.timezone.utc)
+            path: str | None = f"/v3/trades/{sym}"
+            params: dict | None = {
+                "timestamp.gte": int(lo.timestamp() * 1e9),
+                "timestamp.lt": int(hi.timestamp() * 1e9),
+                "order": "asc", "sort": "timestamp", "limit": 50000}
+            while path and pages < max_pages:
+                try:
+                    data = await self._get(path, params)
+                except NotEntitled as exc:
+                    raise NotEntitled(
+                        "Massive refused trade-level data; the plan on this key "
+                        "does not include /v3/trades.", provider=self.name) from exc
+                pages += 1
+                for r in data.get("results") or []:
+                    stamp = r.get("sip_timestamp") or r.get("participant_timestamp")
+                    price, size = r.get("price"), r.get("size")
+                    if not stamp or not price or not size:
+                        continue
+                    ts.append(stamp / 1e9)
+                    px.append(float(price))
+                    sz.append(float(size))
+                # next_url is absolute and already carries the cursor.
+                path, params = data.get("next_url"), None
+
+        if pages >= max_pages:
+            log.warning("Massive trades for %s stopped at the %d-page cap; the "
+                        "newest session may be incomplete", sym, max_pages)
+        if len(ts) < 2:
+            raise ProviderError(f"Massive returned no trades for {sym}",
+                                provider=self.name)
+        price_arr = np.asarray(px, dtype=np.float64)
+        return TradeTape(ts=np.asarray(ts, dtype=np.float64), price=price_arr,
+                         size=np.asarray(sz, dtype=np.float64),
+                         side=tick_rule(price_arr), classified="tick_rule",
+                         source=self.name)
+
     # ---- option chain ----------------------------------------------------
 
     async def get_option_chain(self, symbol: str, *,

@@ -394,6 +394,12 @@ class BaseProvider:
                            lookahead_days: int = 120) -> list[EarningsEvent]:
         self._unsupported("earnings calendars")
 
+    async def get_trades(self, symbol: str, *, sessions: int = 1):
+        """Individual trades for the last `sessions` sessions, as a TradeTape
+        (app.engine.footprint). Tick data is a separate entitlement at every
+        vendor, so most adapters do not have it."""
+        self._unsupported("tick-level trades")
+
 
 # --------------------------------------------------------------------------
 # OCC symbol helpers -- shared by every adapter

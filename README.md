@@ -587,6 +587,44 @@ The objective is return-over-drawdown blended with Sharpe and shrunk by trade
 count, never raw P/L. Maximising profit selects for whichever variant took the
 most risk and got lucky in the tail.
 
+### Order-flow footprint and the POC-defence strategy
+
+`/footprint` draws a one-minute footprint chart — bid × ask volume per price
+row, POC, value area, delta, diagonal imbalances — and backtests one strategy
+on it.
+
+**The setup.** A bar whose volume is a multiple of the recent median, whose POC
+sits at one end of its range, which closed away from the POC, with delta
+agreeing. Read literally: most of the bar's business was done low and price left
+upward. **The entry** is a resting limit at that POC, so a trade only happens if
+price returns to the high-transaction area. **The exits** are a stop beyond the
+bar's extreme, an optional partial at target 1 with the stop moved to breakeven,
+and the remainder to target 2 or a time stop.
+
+It runs on a trade tape, because a footprint cannot be derived from OHLCV bars.
+Three sources: an uploaded CSV of real trades (`POST /api/footprint/upload`),
+Massive `/v3/trades` where the plan includes it (side inferred by the tick rule
+and labelled as an estimate), or — demo mode only — a synthetic tape.
+
+Three properties of the backtest are enforced by tests rather than asserted:
+a bar's own trades can never fill its own signal; a limit fills only when price
+trades *through* it, not on a touch; and stop-versus-target ordering is read
+from the trade sequence, never guessed from a bar's high and low.
+
+**What is not established is that the strategy makes money.** The synthetic
+tape has no edge by construction (its price is a random walk independent of
+order flow), and the default parameters lose on it after costs, as anything
+must. That is the test the engine is required to pass, not a finding about
+markets. Two reporting choices follow from taking that seriously:
+
+- Every result is shown beside a **random-entry control** — the same orders,
+  exits and costs on randomly chosen bars and directions. A win rate is mostly
+  a property of exit geometry: scaling out at 1R with a breakeven stop lifts it
+  by ten points or more on coin-flip entries without adding expectancy
+  (`test_scaling_out_raises_win_rate_without_adding_expectancy`).
+- The **walk-forward sweep** chooses parameters on the first part of the tape
+  and reports what they did on the rest, with the gap between the two.
+
 ---
 
 ## Design decisions worth knowing
@@ -635,6 +673,10 @@ GET  /api/strategy/templates             GET  /api/strategy/templates/{id}
 POST /api/strategy/analyze               POST /api/strategy/compare
 POST /api/strategy/guidance
 
+POST /api/footprint/run                  POST /api/footprint/sweep
+POST /api/footprint/upload               GET  /api/footprint/bars
+GET  /api/footprint/defaults
+
 GET  /api/research/profile/{symbol}      GET  /api/research/fundamentals/{symbol}
 GET  /api/research/news
 
@@ -678,6 +720,9 @@ Interactive docs at `/docs`.
 | Massive / Webull / synthetic data | Built |
 | Earnings calendar, implied move, history | Built and tested |
 | Backtesting (rules replay, metrics, ledger, persistence) | Built and tested |
+| Order-flow footprint chart, POC-defence backtest, control, sweep | Built and tested on synthetic and hand-built tapes |
+| Footprint strategy edge on real trades | **Not established** — needs a real trade tape |
+| Massive `/v3/trades` adapter | Built against the documented shape with mocked HTTP; not run against the live API |
 | Dashboard, backtest and research UI | Built |
 | Volatility forecasting (HAR-RV + GARCH, dated projections) | Built and tested |
 | Directional prediction (walk-forward, reports its own out-of-sample skill) | Built and tested |
